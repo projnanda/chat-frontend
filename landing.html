@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NANDA Agentic Chat | Sign In</title>
+    <link rel="stylesheet" href="landing.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+    <div class="particles-container" id="particles-js"></div>
+    <div class="container">
+        <div class="content">
+            <div class="logo-container">
+                <div class="logo-pulse"></div>
+                <div class="logo">
+                    <i class="fas fa-robot"></i>
+                </div>
+            </div>
+            <h1>NANDA<span class="accent">.</span></h1>
+            <h2>Agentic Chat Assistant</h2>
+            <p>Connect with intelligent agents powered by advanced AI technology</p>
+
+            <div class="signin-container">
+                <p class="signin-text">Sign in to get started</p>
+                
+                <!-- Google Sign-In button will be rendered here -->
+                <div id="google-signin-button"></div>
+                
+                <p class="terms">By signing in, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 NANDA Agentic Chat. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script type="module">
+        // Import the OAuth config
+        import oauthConfig from './oauth-config.js';
+        
+        // Log the Client ID being used
+        console.log("Using Google Client ID:", oauthConfig.googleClientId);
+        
+        // Initialize particle.js
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.particlesJS) {
+                particlesJS('particles-js', {
+                    "particles": {
+                        "number": {
+                            "value": 80,
+                            "density": {
+                                "enable": true,
+                                "value_area": 800
+                            }
+                        },
+                        "color": {
+                            "value": "#0071e3"
+                        },
+                        "shape": {
+                            "type": "circle",
+                            "stroke": {
+                                "width": 0,
+                                "color": "#000000"
+                            },
+                            "polygon": {
+                                "nb_sides": 5
+                            }
+                        },
+                        "opacity": {
+                            "value": 0.2,
+                            "random": false,
+                            "anim": {
+                                "enable": false,
+                                "speed": 1,
+                                "opacity_min": 0.1,
+                                "sync": false
+                            }
+                        },
+                        "size": {
+                            "value": 3,
+                            "random": true,
+                            "anim": {
+                                "enable": false,
+                                "speed": 40,
+                                "size_min": 0.1,
+                                "sync": false
+                            }
+                        },
+                        "line_linked": {
+                            "enable": true,
+                            "distance": 150,
+                            "color": "#38b7ff",
+                            "opacity": 0.2,
+                            "width": 1
+                        },
+                        "move": {
+                            "enable": true,
+                            "speed": 2,
+                            "direction": "none",
+                            "random": false,
+                            "straight": false,
+                            "out_mode": "out",
+                            "bounce": false,
+                            "attract": {
+                                "enable": false,
+                                "rotateX": 600,
+                                "rotateY": 1200
+                            }
+                        }
+                    },
+                    "interactivity": {
+                        "detect_on": "canvas",
+                        "events": {
+                            "onhover": {
+                                "enable": true,
+                                "mode": "grab"
+                            },
+                            "onclick": {
+                                "enable": true,
+                                "mode": "push"
+                            },
+                            "resize": true
+                        },
+                        "modes": {
+                            "grab": {
+                                "distance": 140,
+                                "line_linked": {
+                                    "opacity": 0.5
+                                }
+                            },
+                            "bubble": {
+                                "distance": 400,
+                                "size": 40,
+                                "duration": 2,
+                                "opacity": 8,
+                                "speed": 3
+                            },
+                            "repulse": {
+                                "distance": 200,
+                                "duration": 0.4
+                            },
+                            "push": {
+                                "particles_nb": 4
+                            },
+                            "remove": {
+                                "particles_nb": 2
+                            }
+                        }
+                    },
+                    "retina_detect": true
+                });
+            }
+            
+            // Get the container for the Google Sign-In button
+            const googleSigninDiv = document.getElementById('google-signin-button');
+
+            // ONLY Create the necessary divs with data attributes.
+            // The loaded Google library will use these attributes to initialize and render.
+            
+            // Create g_id_onload div
+            const gIdOnloadDiv = document.createElement('div');
+            gIdOnloadDiv.id = 'g_id_onload';
+            gIdOnloadDiv.dataset.client_id = oauthConfig.googleClientId;
+            gIdOnloadDiv.dataset.context = 'signin';
+            gIdOnloadDiv.dataset.ux_mode = 'popup';
+            gIdOnloadDiv.dataset.callback = 'handleCredentialResponse'; // Needs global function
+            gIdOnloadDiv.dataset.auto_select = 'true';
+            gIdOnloadDiv.dataset.itp_support = 'true';
+            
+            // Create g_id_signin div
+            const gIdSigninDiv = document.createElement('div');
+            gIdSigninDiv.className = 'g_id_signin';
+            gIdSigninDiv.dataset.type = 'standard';
+            gIdSigninDiv.dataset.shape = 'rectangular';
+            gIdSigninDiv.dataset.theme = 'outline';
+            gIdSigninDiv.dataset.text = 'signin_with';
+            gIdSigninDiv.dataset.size = 'large';
+            gIdSigninDiv.dataset.logo_alignment = 'center';
+            gIdSigninDiv.dataset.width = '280';
+            
+            // Append both divs to the container
+            if (googleSigninDiv) { // Check if container exists
+            googleSigninDiv.appendChild(gIdOnloadDiv);
+            googleSigninDiv.appendChild(gIdSigninDiv);
+               console.log("Appended Google Sign-In divs to container.");
+            } else {
+               console.error("Google Sign-In button container not found!");
+            }
+        });
+        
+        // Define the callback function globally
+        window.handleCredentialResponse = function(response) {
+            // This function handles the credential response from Google Sign-In
+            
+            // Decode the JWT ID token to get user information
+            const responsePayload = parseJwt(response.credential);
+            
+            // Store user info in localStorage (in a real app, you'd validate on your server)
+            // Remove spaces from the name before storing
+            const originalName = responsePayload.name;
+            const modifiedName = originalName.replace(/\s+/g, ''); // Remove all whitespace
+            console.log(`Storing name as "${modifiedName}" (original: "${originalName}")`); // Add log for verification
+
+            localStorage.setItem('userProfile', JSON.stringify({
+                name: modifiedName, // Use the modified name
+                email: responsePayload.email,
+                picture: responsePayload.picture,
+                sub: responsePayload.sub // Google's user identifier
+            }));
+            
+            // Redirect to chat page
+            window.location.href = "index.html";
+        };
+        
+        // Helper function to decode JWT tokens
+        function parseJwt(token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        }
+    </script>
+</body>
+</html> 
