@@ -266,6 +266,108 @@ h2 {
     transform: scaleX(1);
 }
 
+/* Username input form styling */
+#username-container {
+    width: 100%;
+}
+
+.input-group {
+    margin-bottom: 1.5rem;
+}
+
+.username-field-container {
+    position: relative;
+    width: 100%;
+}
+
+.at-symbol {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent-primary);
+    font-weight: bold;
+    font-size: 1rem;
+    z-index: 5;
+}
+
+#username-input {
+    width: 100%;
+    padding: 12px 15px 12px 30px;
+    background-color: rgba(30, 30, 30, 0.7);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    margin-bottom: 5px;
+}
+
+.username-preview {
+    margin: 5px 0;
+    font-size: 0.9rem;
+    color: var(--accent-primary);
+    font-weight: 500;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#username-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2);
+}
+
+.validation-message {
+    font-size: 0.85rem;
+    margin: 5px 0;
+    min-height: 1.2em;
+    padding-left: 2px;
+}
+
+.validation-message.valid {
+    color: #4cd964;
+}
+
+.validation-message.invalid {
+    color: #ff3b30;
+}
+
+.input-help {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    text-align: left;
+    margin-left: 2px;
+}
+
+.username-submit {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+}
+
+.username-submit:hover {
+    background: var(--accent-secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.username-submit:active {
+    transform: translateY(0);
+}
+
 footer {
     text-align: center;
     padding: 1.5rem;
@@ -318,4 +420,94 @@ footer {
     .logo i {
         font-size: 32px;
     }
+    
+    #username-input {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+    
+    .username-submit {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Loading indicator for Google Sign-In */
+.signin-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+}
+
+.signin-spinner {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 10px;
+    border: 3px solid rgba(0, 113, 227, 0.2);
+    border-top: 3px solid var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.signin-loading p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Manual sign-in fallback */
+#manual-signin {
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+#manual-signin p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+#manual-signin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#manual-name {
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    background-color: rgba(26, 26, 26, 0.7);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+#manual-name:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2);
+}
+
+.manual-signin-button {
+    padding: 10px 15px;
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 5px;
+}
+
+.manual-signin-button:hover {
+    background: var(--accent-secondary);
 } 

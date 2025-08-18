@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Check if user is authenticated
     const userProfile = localStorage.getItem('userProfile');
-    if (!userProfile) {
-        // Redirect to landing page if not authenticated
+    if (!userProfile && !window.location.pathname.endsWith('landing.html')) {
+        // Redirect to landing page if not authenticated and not already there
         window.location.href = 'landing.html';
         return;
     }
@@ -22,47 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize the chat interface
     initializeChatInterface();
     
-    // Function to manually load registry data as a CORS fallback
-    function loadRegistryDataManually() {
-        console.log("📥 Using manually loaded registry data as fallback");
-        
-        // This is the latest data from our curl request to http://18.212.184.117:6900/list
-        const registryData = {
-            "aia": "https://f55c-18-27-114-185.ngrok-free.app",
-            "ayush": "https://af4e-73-142-105-51.ngrok-free.app",
-            "bob": "https://2275-73-142-105-51.ngrok-free.app",
-            "cale": "https://bbf2-18-29-138-202.ngrok-free.app",
-            "prad": "https://dbd8-18-27-113-191.ngrok-free.app",
-            "ramesh": "https://26b9-18-27-114-185.ngrok-free.app"
-        };
-        
-        // Show a message to the user that we're using fallback data
-        if (chatMessages) {
-            // Clear existing messages
-            chatMessages.innerHTML = '';
-            
-            // Add a message about using fallback data
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message', 'bot-message');
-            messageDiv.innerHTML = `
-                <div class="message-content">
-                    <p><strong>Connection Issue:</strong> Could not connect to the registry. Using locally stored agent data.</p>
-                    <p style="font-size: 0.8em; margin-top: 8px; color: rgba(255,255,255,0.6);">
-                        This is likely due to a CORS (Cross-Origin Resource Sharing) restriction. 
-                        The browser prevents direct connections to the registry for security reasons.
-                    </p>
-                </div>
-            `;
-            chatMessages.appendChild(messageDiv);
-            
-            // Add a second message with an OK button to dismiss
-            showErrorMessage("Could not connect to the registry. Please try again later or contact support if the issue persists.");
-        }
-        
-        // Load the agents from the manual data
-        loadAgentsFromData(registryData);
-    }
-    
     // Function to fetch agents from the registry
     async function fetchAgentsFromRegistry() {
         console.group('📡 Registry Connection Attempts');
@@ -76,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Try direct fetch first (works if API supports CORS)
             try {
-                const targetUrl = 'http://18.212.184.117:6900/list';
+                const targetUrl = 'https://chat.nanda-registry.com:6900/list';
                 console.log(`🌐 Requesting: ${targetUrl}`);
                 
                 const response = await fetch(targetUrl, {
@@ -107,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("🔍 ATTEMPT 2: CORS proxy");
             try {
                 const proxyUrl = 'https://corsproxy.io/?';
-                const targetUrl = 'http://18.212.184.117:6900/list';
+                const targetUrl = 'https://chat.nanda-registry.com:6900/list';
                 
                 console.log(`🌐 Requesting via proxy: ${proxyUrl}${encodeURIComponent(targetUrl)}`);
                 
@@ -138,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("🔍 ATTEMPT 3: Alternative proxy");
             try {
                 const anotherProxyUrl = 'https://api.allorigins.win/raw?url=';
-                const targetUrl = 'http://18.212.184.117:6900/list';
+                const targetUrl = 'https://chat.nanda-registry.com:6900/list';
                 
                 console.log(`🌐 Requesting via second proxy: ${anotherProxyUrl}${encodeURIComponent(targetUrl)}`);
                 
@@ -197,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             
             // Point to a URL that returns JSONP
-            const jsonpUrl = `http://18.212.184.117:6900/list?callback=handleRegistryData`;
+            const jsonpUrl = `https://chat.nanda-registry.com:6900/list?callback=handleRegistryData`;
             console.log(`🌐 Requesting JSONP: ${jsonpUrl}`);
             script.src = jsonpUrl;
             document.body.appendChild(script);
@@ -241,7 +200,33 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Function to create an agent item element
     function createAgentItem(name, url, index) {
-        const iconClass = getIconClassForAgent(index);
+        // Helper function to get background color based on index
+        function getAvatarColorForAgent(idx) {
+            const colors = [
+                '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57',
+                '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43',
+                '#3742fa', '#2f3542', '#ff3838', '#00d8d6', '#17c0eb'
+            ];
+            return colors[idx % colors.length];
+        }
+        
+        // Helper function to get initials from name
+        function getInitials(name) {
+            if (!name) return '?';
+            
+            // Handle names with special characters (like "mariagorskikh - Sandbox")
+            const cleanName = name.replace(/\s*-\s*sandbox\s*/i, '').trim();
+            
+            const words = cleanName.split(/\s+/);
+            if (words.length >= 2) {
+                return (words[0][0] + words[1][0]).toUpperCase();
+            } else {
+                return cleanName.slice(0, 2).toUpperCase();
+            }
+        }
+        
+        const avatarColor = getAvatarColorForAgent(index);
+        const initials = getInitials(name);
         
         const agentItem = document.createElement('div');
         agentItem.className = 'agent-item';
@@ -253,8 +238,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         agentItem.innerHTML = `
-            <div class="agent-avatar">
-                <i class="fas ${iconClass}"></i>
+            <div class="agent-avatar" style="background-color: ${avatarColor};">
+                <span class="avatar-initials">${initials}</span>
             </div>
             <div class="agent-info">
                 <h3>${capitalizeFirstLetter(name) || `Agent ${index + 1}`}</h3>
@@ -262,16 +247,6 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         
         return agentItem;
-    }
-    
-    // Helper function to get icon class based on index
-    function getIconClassForAgent(index) {
-        const icons = [
-            'fa-user', 'fa-code', 'fa-search', 
-            'fa-edit', 'fa-cog', 'fa-chart-bar', 
-            'fa-globe', 'fa-brain', 'fa-comments'
-        ];
-        return icons[index % icons.length];
     }
     
     // Helper function to capitalize first letter
@@ -371,51 +346,86 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("No agent ID provided to setCurrentAgent");
             id = "default-agent";
         }
-        
         // If the agent ID is the same, don't change anything
         if (id === currentAgent.id && currentAgent.id) return;
-        
         currentAgent = {
             id: id,
             url: url || null,
             name: name || capitalizeFirstLetter(id),
             description: 'AI Agent' // Simple default description
         };
-        
         console.log("Current agent set to:", currentAgent);
+        
+        // Check if this is a sandbox agent and apply special styling
+        const chatContainer = document.querySelector('.chat-container');
+        const isSandboxAgent = id.toLowerCase().includes('sandbox') || (name && name.toLowerCase().includes('sandbox'));
+        
+        if (isSandboxAgent) {
+            console.log("🤖 Activating sandbox mode for AI assistant chat");
+            chatContainer.classList.add('sandbox-mode');
+            if (userInput) {
+                userInput.placeholder = "Ask your AI assistant anything...";
+            }
+        } else {
+            console.log("👥 Activating regular mode for peer-to-peer chat");
+            chatContainer.classList.remove('sandbox-mode');
+            if (userInput) {
+                userInput.placeholder = "Type your message here...";
+            }
+        }
         
         // Update UI
         updateAgentHeader();
-        
-        // Clear chat and add greeting
+        // Clear chat (no greeting message)
         clearChat();
-        addMessage(getGreetingForAgent(currentAgent.id));
-    }
-    
-    // Function to get a greeting message for an agent
-    function getGreetingForAgent(agentId) {
-        const name = currentAgent.name;
-        return `Hello! I'm ${name}, your NANDA AI assistant. How can I help you today?`;
     }
     
     // Update the chat header with current agent info
     function updateAgentHeader() {
-        const avatar = chatHeader.querySelector('.avatar i');
+        const avatar = chatHeader.querySelector('.avatar');
         const title = chatHeader.querySelector('.title h1');
         const description = chatHeader.querySelector('.title p');
         
         if (avatar && title && description) {
-            avatar.className = ''; // Clear previous icon
-            avatar.classList.add('fas', getIconForAgent(currentAgent.id));
+            // Helper function to get initials from name
+            function getInitials(name) {
+                if (!name) return '?';
+                
+                // Handle names with special characters (like "mariagorskikh - Sandbox")
+                const cleanName = name.replace(/\s*-\s*sandbox\s*/i, '').trim();
+                
+                const words = cleanName.split(/\s+/);
+                if (words.length >= 2) {
+                    return (words[0][0] + words[1][0]).toUpperCase();
+                } else {
+                    return cleanName.slice(0, 2).toUpperCase();
+                }
+            }
+            
+            // Helper function to get color based on agent name
+            function getAvatarColorForName(name) {
+                const colors = [
+                    '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57',
+                    '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43',
+                    '#3742fa', '#2f3542', '#ff3838', '#00d8d6', '#17c0eb'
+                ];
+                // Generate a consistent color based on name hash
+                let hash = 0;
+                for (let i = 0; i < name.length; i++) {
+                    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                return colors[Math.abs(hash) % colors.length];
+            }
+            
+            const initials = getInitials(currentAgent.name);
+            const avatarColor = getAvatarColorForName(currentAgent.name);
+            
+            // Replace icon with initials
+            avatar.innerHTML = `<span class="avatar-initials">${initials}</span>`;
+            avatar.style.backgroundColor = avatarColor;
+            
             title.textContent = currentAgent.name;
-            description.textContent = 'NANDA AI Agent';
         }
-    }
-    
-    // Helper function to determine appropriate icon for an agent
-    function getIconForAgent(id) {
-        // Default to a consistent icon for all agents
-        return 'fa-robot';
     }
     
     // Clear the chat messages
@@ -725,9 +735,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Style based on status
         if (status === 'connecting') {
             statusDiv.style.backgroundColor = '#1a5fb4';
-            statusDiv.style.color = 'white';
-        } else if (status === 'success') {
-            statusDiv.style.backgroundColor = '#2ec27e';
             statusDiv.style.color = 'white';
         } else if (status === 'error') {
             statusDiv.style.backgroundColor = '#e01b24';

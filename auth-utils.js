@@ -33,7 +33,7 @@ export function getUserProfile() {
  * @returns {boolean} True if authenticated, false if redirect happened
  */
 export function requireAuth(loginPage = 'landing.html') {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated() && !window.location.pathname.endsWith(loginPage)) {
         window.location.href = loginPage;
         return false;
     }

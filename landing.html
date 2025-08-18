@@ -2,11 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NANDA Agentic Chat | Sign In</title>
-    <link rel="stylesheet" href="landing.css">
+    <link rel="stylesheet" href="styles.css?v=20241220j">
+    <link rel="stylesheet" href="landing.css?v=20241220j">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Move Google sign-in script to end of body for better loading sequence -->
 </head>
 <body>
     <div class="particles-container" id="particles-js"></div>
@@ -25,8 +27,41 @@
             <div class="signin-container">
                 <p class="signin-text">Sign in to get started</p>
                 
+                <!-- Loading indicator for Google Sign-In -->
+                <div id="signin-loading" class="signin-loading">
+                    <div class="signin-spinner"></div>
+                    <p>Loading sign-in options...</p>
+                </div>
+                
                 <!-- Google Sign-In button will be rendered here -->
-                <div id="google-signin-button"></div>
+                <div id="google-signin-button" style="display: none;">
+                    <!-- Button will be created dynamically by JavaScript -->
+                </div>
+                
+                <!-- Manual sign-in fallback (in case Google Sign-In fails) -->
+                <div id="manual-signin" style="display: none;">
+                    <p>Google Sign-In is unavailable. Try manual sign-in:</p>
+                    <form id="manual-signin-form">
+                        <input type="text" id="manual-name" placeholder="Your name" required>
+                        <button type="submit" class="manual-signin-button">Continue</button>
+                    </form>
+                </div>
+                
+                <!-- Username input form (initially hidden) -->
+                <div id="username-container" style="display: none;">
+                    <p class="signin-text">Choose your username</p>
+                    <form id="username-form">
+                        <div class="input-group">
+                            <div class="username-field-container">
+                                <span class="at-symbol">@</span>
+                                <input type="text" id="username-input" placeholder="username (3-20 chars: letters, numbers, _, -)" required>
+                            </div>
+                            <p id="username-validation" class="validation-message"></p>
+                            <p class="input-help">Your username will be displayed as @username in the chat</p>
+                        </div>
+                        <button type="submit" class="username-submit">Continue to Chat</button>
+                    </form>
+                </div>
                 
                 <p class="terms">By signing in, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></p>
             </div>
@@ -34,16 +69,206 @@
     </div>
 
     <footer>
-        <p>&copy; 2023 NANDA Agentic Chat. All rights reserved.</p>
+        <p>&copy; 2025 NANDA Agentic Chat. All rights reserved.</p>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <!-- Add Google Sign-In script here with explicit onload handler -->
+    <script src="https://accounts.google.com/gsi/client" async id="google-signin-script"></script>
+    
     <script type="module">
-        // Import the OAuth config
+        // Import the OAuth config and global configuration (contains apiBaseUrl)
         import oauthConfig from './oauth-config.js';
+        import config from './config.js';
         
         // Log the Client ID being used
         console.log("Using Google Client ID:", oauthConfig.googleClientId);
+        
+        // Global variables for validation
+        let googleUserData = null;
+        let usernameValidation = null;
+        let googleSignInAttempts = 0;
+        const MAX_SIGNIN_ATTEMPTS = 3;
+        
+        // after import lines
+        const API_BASE = (config && config.apiBaseUrl) ? config.apiBaseUrl : 'https://chat.nanda-registry.com:6900';
+        
+        // Username validation function
+        function validateUsername(username) {
+            if (!usernameValidation) {
+                usernameValidation = document.getElementById('username-validation');
+                if (!usernameValidation) return;
+            }
+            
+            const usernameRegex = /^[a-zA-Z0-9_-]{3,20}$/;
+            
+            // Empty is considered neutral (no validation message)
+            if (!username.trim()) {
+                usernameValidation.textContent = '';
+                usernameValidation.className = 'validation-message';
+                return;
+            }
+            
+            if (usernameRegex.test(username)) {
+                usernameValidation.textContent = '✓ Username format is valid';
+                usernameValidation.className = 'validation-message valid';
+                
+                // Show an example of how the username will appear with @ prefix
+                const previewDiv = document.getElementById('username-preview') || document.createElement('div');
+                previewDiv.id = 'username-preview';
+                previewDiv.className = 'username-preview';
+                previewDiv.textContent = `Your username will appear as: @${username}`;
+                
+                // Add it to DOM if it's not already there
+                if (!document.getElementById('username-preview')) {
+                    const inputGroup = document.querySelector('.input-group');
+                    if (inputGroup) {
+                        inputGroup.insertBefore(previewDiv, document.querySelector('.input-help'));
+                    }
+                }
+            } else {
+                usernameValidation.textContent = '✗ Username must be 3-20 characters (letters, numbers, _, -)';
+                usernameValidation.className = 'validation-message invalid';
+                
+                // Remove preview if validation fails
+                const previewDiv = document.getElementById('username-preview');
+                if (previewDiv) {
+                    previewDiv.remove();
+                }
+            }
+        }
+        
+        // Initialize and configure Google Sign-In
+        function initializeGoogleSignIn() {
+            // Show loading indicator
+            document.getElementById('signin-loading').style.display = 'flex';
+            document.getElementById('google-signin-button').style.display = 'none';
+            
+            // Create the container divs for Google Sign-In
+            const googleSigninButton = document.getElementById('google-signin-button');
+            googleSigninButton.innerHTML = `
+                <div id="g_id_onload"
+                     data-client_id="${oauthConfig.googleClientId}"
+                     data-context="signin"
+                     data-ux_mode="popup"
+                     data-callback="handleCredentialResponse"
+                     data-auto_select="false"
+                     data-itp_support="true">
+                </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="rectangular"
+                     data-theme="outline"
+                     data-text="signin_with"
+                     data-size="large"
+                     data-logo_alignment="center"
+                     data-width="280">
+                </div>
+            `;
+            
+            // Check if Google library is loaded
+            if (window.google && window.google.accounts && window.google.accounts.id) {
+                console.log("Google Sign-In library loaded successfully");
+                
+                // Initialize Google Sign-In
+                try {
+                    // Initialize with the client ID and callback
+                    window.google.accounts.id.initialize({
+                        client_id: oauthConfig.googleClientId,
+                        callback: handleCredentialResponse,
+                        auto_select: false
+                    });
+                    
+                    // Render the button
+                    const buttonElement = document.querySelector('.g_id_signin');
+                    window.google.accounts.id.renderButton(buttonElement, {
+                        theme: "outline",
+                        size: "large",
+                        type: "standard",
+                        shape: "rectangular",
+                        text: "signin_with",
+                        logo_alignment: "center",
+                        width: 280
+                    });
+                    
+                    // Show the sign-in button when ready
+                    document.getElementById('signin-loading').style.display = 'none';
+                    document.getElementById('google-signin-button').style.display = 'block';
+                    
+                    // Reset the retry counter
+                    googleSignInAttempts = 0;
+                    
+                    console.log("Google Sign-In initialized and button rendered");
+                } catch (error) {
+                    console.error("Error initializing Google Sign-In:", error);
+                    handleGoogleSignInFailure();
+                }
+            } else {
+                console.warn("Google Sign-In library not loaded yet, waiting...");
+                
+                // If too many attempts, show manual sign-in
+                if (++googleSignInAttempts >= MAX_SIGNIN_ATTEMPTS) {
+                    console.error(`Maximum sign-in attempts (${MAX_SIGNIN_ATTEMPTS}) reached. Showing manual sign-in.`);
+                    handleGoogleSignInFailure();
+                    return;
+                }
+                
+                // Try again after a delay
+                setTimeout(initializeGoogleSignIn, 2000); // 2 second delay
+            }
+        }
+        
+        // Handle Google Sign-In initialization failure
+        function handleGoogleSignInFailure() {
+            document.getElementById('signin-loading').style.display = 'none';
+            document.getElementById('google-signin-button').style.display = 'none';
+            document.getElementById('manual-signin').style.display = 'block';
+            
+            // Setup manual sign-in form
+            const manualForm = document.getElementById('manual-signin-form');
+            if (manualForm) {
+                manualForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const nameInput = document.getElementById('manual-name');
+                    if (nameInput && nameInput.value.trim()) {
+                        // Create minimal user data
+                        googleUserData = {
+                            name: nameInput.value.trim(),
+                            email: 'user@example.com',
+                            picture: 'https://via.placeholder.com/150',
+                            sub: 'manual-' + Date.now()
+                        };
+                        
+                        // Continue to username creation
+                        document.getElementById('manual-signin').style.display = 'none';
+                        const usernameContainer = document.getElementById('username-container');
+                        if (usernameContainer) {
+                            usernameContainer.style.display = 'block';
+                            
+                            // Pre-fill the username field
+                            const usernameInput = document.getElementById('username-input');
+                            if (usernameInput) {
+                                let defaultUsername = googleUserData.name.replace(/\s+/g, '').toLowerCase();
+                                defaultUsername = defaultUsername.replace(/[^a-z0-9_-]/gi, '');
+                                
+                                if (defaultUsername.length > 20) {
+                                    defaultUsername = defaultUsername.substring(0, 20);
+                                }
+                                
+                                if (defaultUsername.length < 3) {
+                                    defaultUsername = defaultUsername + '123';
+                                }
+                                
+                                usernameInput.value = defaultUsername;
+                                usernameInput.select();
+                                
+                                validateUsername(defaultUsername);
+                            }
+                        }
+                    }
+                });
+            }
+        }
         
         // Initialize particle.js
         document.addEventListener('DOMContentLoaded', function() {
@@ -155,76 +380,317 @@
                 });
             }
             
-            // Get the container for the Google Sign-In button
-            const googleSigninDiv = document.getElementById('google-signin-button');
-
-            // ONLY Create the necessary divs with data attributes.
-            // The loaded Google library will use these attributes to initialize and render.
+            // Initialize Google Sign-In
+            initializeGoogleSignIn();
             
-            // Create g_id_onload div
-            const gIdOnloadDiv = document.createElement('div');
-            gIdOnloadDiv.id = 'g_id_onload';
-            gIdOnloadDiv.dataset.client_id = oauthConfig.googleClientId;
-            gIdOnloadDiv.dataset.context = 'signin';
-            gIdOnloadDiv.dataset.ux_mode = 'popup';
-            gIdOnloadDiv.dataset.callback = 'handleCredentialResponse'; // Needs global function
-            gIdOnloadDiv.dataset.auto_select = 'true';
-            gIdOnloadDiv.dataset.itp_support = 'true';
+            // Set up username form submission
+            const usernameForm = document.getElementById('username-form');
+            if (usernameForm) {
+                usernameForm.addEventListener('submit', handleUsernameSubmit);
+            }
             
-            // Create g_id_signin div
-            const gIdSigninDiv = document.createElement('div');
-            gIdSigninDiv.className = 'g_id_signin';
-            gIdSigninDiv.dataset.type = 'standard';
-            gIdSigninDiv.dataset.shape = 'rectangular';
-            gIdSigninDiv.dataset.theme = 'outline';
-            gIdSigninDiv.dataset.text = 'signin_with';
-            gIdSigninDiv.dataset.size = 'large';
-            gIdSigninDiv.dataset.logo_alignment = 'center';
-            gIdSigninDiv.dataset.width = '280';
+            // Add real-time validation as user types
+            const usernameInput = document.getElementById('username-input');
+            usernameValidation = document.getElementById('username-validation');
             
-            // Append both divs to the container
-            if (googleSigninDiv) { // Check if container exists
-            googleSigninDiv.appendChild(gIdOnloadDiv);
-            googleSigninDiv.appendChild(gIdSigninDiv);
-               console.log("Appended Google Sign-In divs to container.");
-            } else {
-               console.error("Google Sign-In button container not found!");
+            if (usernameInput && usernameValidation) {
+                usernameInput.addEventListener('input', function() {
+                    validateUsername(this.value);
+                });
             }
         });
         
         // Define the callback function globally
         window.handleCredentialResponse = function(response) {
             // This function handles the credential response from Google Sign-In
+            if (!response || !response.credential) {
+                console.error("Invalid credential response from Google", response);
+                return;
+            }
             
-            // Decode the JWT ID token to get user information
-            const responsePayload = parseJwt(response.credential);
-            
-            // Store user info in localStorage (in a real app, you'd validate on your server)
-            // Remove spaces from the name before storing
-            const originalName = responsePayload.name;
-            const modifiedName = originalName.replace(/\s+/g, ''); // Remove all whitespace
-            console.log(`Storing name as "${modifiedName}" (original: "${originalName}")`); // Add log for verification
+            try {
+                // Decode the JWT ID token to get user information
+                const responsePayload = parseJwt(response.credential);
+                
+                console.log("Google Sign-In successful:", responsePayload.email);
+                
+                // Store the Google data for local use
+                googleUserData = responsePayload;
+                
+                // Show a temporary loading message
+                const signinContainer = document.querySelector('.signin-container');
+                if (signinContainer) {
+                    signinContainer.innerHTML = `
+                        <div class="signin-loading">
+                            <div class="signin-spinner"></div>
+                            <p>Checking your account...</p>
+                        </div>
+                    `;
+                }
+                
+                // Call the /api/check-user endpoint to check if user exists
+                console.log("Attempting to call API check-user endpoint...");
 
-            localStorage.setItem('userProfile', JSON.stringify({
-                name: modifiedName, // Use the modified name
-                email: responsePayload.email,
-                picture: responsePayload.picture,
-                sub: responsePayload.sub // Google's user identifier
-            }));
+                // Timeout for API call to avoid hanging indefinitely on SSL errors
+                const apiCallTimeout = new Promise((resolve, reject) => {
+                    setTimeout(() => reject(new Error('API call timed out after 5 seconds')), 5000);
+                });
+
+                // API call with all necessary headers
+                const apiCall = fetch(`${API_BASE}/api/check-user`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': window.location.origin,
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors',
+                    credentials: 'omit',
+                    body: JSON.stringify({ email: responsePayload.email })
+                });
+
+                // Use Promise.race to implement a timeout
+                Promise.race([apiCall, apiCallTimeout])
+                .then(response => {
+                    console.log("Check user API response status:", response.status);
+                    console.log("Check user API response headers:", [...response.headers.entries()]);
+                    
+                    // Even if we get an error status, try to parse the response body
+                    return response.json().then(data => {
+                        try {
+                            // Try to parse as JSON
+                            return data ? data : { status: 'error', message: 'Empty response' };
+                        } catch (e) {
+                            // If it's not JSON, return the raw text for debugging
+                            console.log("Raw response text:", data);
+                            return { 
+                                status: 'error', 
+                                message: 'Invalid JSON response',
+                                rawResponse: data,
+                                responseStatus: response.status
+                            };
+                        }
+                    });
+                })
+                .then(data => {
+                    console.log("Check user response:", data);
+                    
+                    if (data.exists) {
+                        // User exists in the backend, proceed directly
+                        console.log("✅ Existing user found in database, proceeding to chat");
+                        
+                        // Store the user data from the backend
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        
+                        // Also update the userProfile with any returned information
+                        let userProfile = {
+                            name: data.user.username || data.user.name || responsePayload.name,
+                            email: responsePayload.email,
+                            picture: responsePayload.picture,
+                            sub: responsePayload.sub, // Google's user identifier
+                            displayName: `@${data.user.username || data.user.name || responsePayload.name}`
+                        };
+                        
+                        // Save the profile
+                        localStorage.setItem('userProfile', JSON.stringify(userProfile));
+                        
+                        // Ensure we have a client ID for allocation
+                        if (!localStorage.getItem('client_id')) {
+                            localStorage.setItem('client_id', 'client-' + Date.now());
+                        }
+                        
+                        // IMPORTANT: Store the api_url to prevent the app from calling /api/allocate again
+                        if (data.api_url) {
+                            localStorage.setItem('server_url', data.api_url);
+                            console.log("✅ Stored existing user's api_url:", data.api_url);
+                        } else {
+                            console.warn("⚠️ No api_url returned for existing user, app will need to call /api/allocate");
+                        }
+                        
+                        // Redirect to the chat page
+                        window.location.href = "index.html";
+                        
+                    } else {
+                        // User doesn't exist, show username selection
+                        console.log("⚠️ User not found in database, proceeding to username selection");
+                        showUsernameSelection();
+                    }
+                })
+                .catch(error => {
+                    console.error("Error checking user existence:", error);
+                    alert('Error checking user. Please try again.');
+                });
+            } catch (error) {
+                console.error("Error handling Google Sign-In response:", error);
+                handleGoogleSignInFailure();
+            }
             
-            // Redirect to chat page
-            window.location.href = "index.html";
+            // Helper function to show username selection
+            function showUsernameSelection() {
+                // Hide Google sign-in button
+                const googleSigninButton = document.getElementById('google-signin-button');
+                if (googleSigninButton) {
+                    googleSigninButton.style.display = 'none';
+                }
+                
+                // Ensure usernameContainer exists (it may have been overwritten by the loading spinner)
+                let usernameContainerElem = document.getElementById('username-container');
+                if (!usernameContainerElem) {
+                    usernameContainerElem = document.createElement('div');
+                    usernameContainerElem.id = 'username-container';
+                    usernameContainerElem.innerHTML = `
+                        <p class="signin-text">Choose your username</p>
+                        <form id="username-form">
+                            <div class="input-group">
+                                <div class="username-field-container">
+                                    <span class="at-symbol">@</span>
+                                    <input type="text" id="username-input" placeholder="username (3-20 chars: letters, numbers, _, -)" required>
+                                </div>
+                                <p id="username-validation" class="validation-message"></p>
+                                <p class="input-help">Your username will be displayed as @username in the chat</p>
+                            </div>
+                            <button type="submit" class="username-submit">Continue to Chat</button>
+                        </form>`;
+                    // append to signinContainer
+                    const signinContainer = document.querySelector('.signin-container');
+                    if (signinContainer) signinContainer.appendChild(usernameContainerElem);
+                }
+                usernameContainerElem.style.display = 'block';
+                // Add listener to form if it was recreated
+                const usernameFormElem = document.getElementById('username-form');
+                if (usernameFormElem && !usernameFormElem.dataset.listenerAttached) {
+                    usernameFormElem.addEventListener('submit', handleUsernameSubmit);
+                    usernameFormElem.dataset.listenerAttached = 'true';
+                }
+                
+                // Pre-fill username input with a suggested username from Google name
+                const usernameInput = document.getElementById('username-input');
+                if (usernameInput && googleUserData.name) {
+                    // Generate a default username from Google name
+                    let defaultUsername = googleUserData.name.replace(/\s+/g, '').toLowerCase();
+                    // Further clean up
+                    defaultUsername = defaultUsername.replace(/[^a-z0-9_-]/gi, '');
+                    
+                    if (defaultUsername.length > 20) {
+                        defaultUsername = defaultUsername.substring(0, 20);
+                    }
+                    
+                    if (defaultUsername.length < 3) {
+                        defaultUsername = defaultUsername + '123';
+                    }
+                    
+                    usernameInput.value = defaultUsername;
+                    usernameInput.select();
+                    validateUsername(defaultUsername);
+                }
+            }
         };
+        
+        // Handle username form submission
+        function handleUsernameSubmit(event) {
+            event.preventDefault();
+            const usernameInput = document.getElementById('username-input');
+            if (!usernameInput || !googleUserData) return;
+            const username = usernameInput.value.trim();
+            const usernameRegex = /^[a-zA-Z0-9_-]{3,20}$/;
+            if (!usernameRegex.test(username)) {
+                alert('Username must be 3-20 characters long and can only contain letters, numbers, underscores, and hyphens (no spaces).');
+                return;
+            }
+            // Show loading state
+            const submitButton = document.querySelector('.username-submit');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Creating account...';
+            }
+            
+            // Check for agentId parameter in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const agentId = urlParams.get('agentId');
+            
+            // Determine endpoint and payload based on agentId presence
+            let endpoint, payload;
+            if (agentId) {
+                // If agentId exists, use /api/setup endpoint
+                endpoint = `${API_BASE}/api/setup`;
+                payload = {
+                    email: googleUserData.email,
+                    agent_id: agentId,
+                    username: username
+                };
+                console.log('Agent signup detected, using /api/setup with agentId:', agentId);
+            } else {
+                // Normal signup flow, use /api/signup endpoint
+                endpoint = `${API_BASE}/api/signup`;
+                payload = {
+                    email: googleUserData.email,
+                    username: username
+                };
+                console.log('Normal signup detected, using /api/signup');
+            }
+            
+            // Call the appropriate endpoint
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Origin': window.location.origin,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Store the user data from the backend
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.setItem('userProfile', JSON.stringify({
+                        name: data.user.username,
+                        displayName: `@${data.user.username}`,
+                        email: data.user.email
+                    }));
+                    localStorage.setItem('client_id', 'client-' + Date.now());
+                    if (data.api_url) {
+                        localStorage.setItem('server_url', data.api_url);
+                    }
+                    window.location.href = "index.html";
+                } else {
+                    alert(data.message || 'Error creating account. Please try again.');
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Continue to Chat';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error("Error signing up:", error);
+                alert('Error creating account. Please try again.');
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Continue to Chat';
+                }
+            });
+        }
         
         // Helper function to decode JWT tokens
         function parseJwt(token) {
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
-            return JSON.parse(jsonPayload);
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (error) {
+                console.error("Error parsing JWT token:", error);
+                return null;
+            }
         }
     </script>
+    <script type="module" src="app.js?v=20241220j"></script>
+    <script type="module" src="ui-manager.js?v=20241220j"></script>
+    <script type="module" src="api-client.js?v=20241220j"></script>
+    <script type="module" src="main.js?v=20241220j"></script>
+    <script src="script.js?v=20241220j"></script>
 </body>
 </html> 

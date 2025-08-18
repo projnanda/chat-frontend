@@ -20,16 +20,65 @@
 }
 
 body {
-    background: var(--bg-primary);
+    background: linear-gradient(-45deg, #000000, #0a0a0a, #1a1a1a, #0c0c0c);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
     display: flex;
     min-height: 100vh;
     color: var(--text-primary);
+    position: relative;
+    overflow: hidden;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(56, 183, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0, 113, 227, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
+    animation: floatingLights 20s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes floatingLights {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+        opacity: 0.3;
+    }
+    33% {
+        transform: translateY(-20px) rotate(120deg);
+        opacity: 0.5;
+    }
+    66% {
+        transform: translateY(10px) rotate(240deg);
+        opacity: 0.4;
+    }
 }
 
 .app-container {
     display: flex;
     width: 100%;
     height: 100vh;
+    position: relative;
+    z-index: 1;
 }
 
 .agents-panel {
@@ -114,14 +163,26 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: var(--accent-primary);
     margin-right: 12px;
-    box-shadow: 0 2px 10px rgba(0, 113, 227, 0.3);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    font-weight: 600;
+    font-size: 14px;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
 }
 
-.agent-avatar i {
-    font-size: 16px;
-    color: white;
+.agent-avatar:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.avatar-initials {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1;
+    text-transform: uppercase;
 }
 
 .agent-info h3 {
@@ -180,18 +241,17 @@ body {
 .avatar {
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
     margin-right: 12px;
-    box-shadow: 0 2px 10px rgba(0, 113, 227, 0.3);
-}
-
-.avatar i {
-    font-size: 18px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    font-weight: 600;
+    font-size: 16px;
     color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
 }
 
 .title h1 {
@@ -208,75 +268,231 @@ body {
 .chat-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 20px 20px 30px;
+    padding: 16px 12px 20px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    background-color: var(--bg-primary);
+    gap: 2px;
+    background: #000000;
+    background-image: 
+        radial-gradient(1px 1px at 20px 30px, rgba(255, 255, 255, 0.6), transparent),
+        radial-gradient(1px 1px at 40px 70px, rgba(255, 255, 255, 0.4), transparent),
+        radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 255, 0.7), transparent),
+        radial-gradient(1px 1px at 130px 80px, rgba(255, 255, 255, 0.3), transparent),
+        radial-gradient(1px 1px at 160px 30px, rgba(255, 255, 255, 0.5), transparent),
+        radial-gradient(1px 1px at 200px 60px, rgba(255, 255, 255, 0.4), transparent),
+        radial-gradient(1px 1px at 230px 90px, rgba(255, 255, 255, 0.6), transparent),
+        radial-gradient(1px 1px at 270px 20px, rgba(255, 255, 255, 0.4), transparent),
+        radial-gradient(1px 1px at 300px 50px, rgba(255, 255, 255, 0.7), transparent),
+        radial-gradient(1px 1px at 330px 80px, rgba(255, 255, 255, 0.3), transparent),
+        radial-gradient(1px 1px at 360px 40px, rgba(255, 255, 255, 0.5), transparent),
+        radial-gradient(1px 1px at 400px 70px, rgba(255, 255, 255, 0.4), transparent);
+    background-size: 420px 100px;
+    background-repeat: repeat;
+    position: relative;
+    animation: regularStarfield 12s ease-in-out infinite;
+}
+
+/* Add twinkling stars layer for regular chats */
+.chat-messages::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        radial-gradient(1px 1px at 50px 20px, rgba(255, 255, 255, 0.7), transparent),
+        radial-gradient(1px 1px at 100px 50px, rgba(255, 255, 255, 0.4), transparent),
+        radial-gradient(1px 1px at 150px 80px, rgba(255, 255, 255, 0.6), transparent),
+        radial-gradient(1px 1px at 250px 30px, rgba(255, 255, 255, 0.3), transparent),
+        radial-gradient(1px 1px at 350px 60px, rgba(255, 255, 255, 0.5), transparent);
+    background-size: 400px 100px;
+    background-repeat: repeat;
+    animation: regularStarfieldTwinkle 15s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes regularStarfield {
+    0%, 100% {
+        opacity: 1;
+    }
+    33% {
+        opacity: 0.7;
+    }
+    66% {
+        opacity: 0.8;
+    }
+}
+
+@keyframes regularStarfieldTwinkle {
+    0%, 100% {
+        opacity: 0.2;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* WhatsApp-style message bubbles - REDESIGNED */
+.message-wrapper {
+    display: flex;
+    margin-bottom: 8px;
+    max-width: 100%;
+    clear: both;
 }
 
 .message {
-    max-width: 85%;
-    padding: 12px 16px;
-    border-radius: 18px;
-    animation: fadeIn 0.3s ease-in-out;
-    line-height: 1.4;
-    font-size: 0.95rem;
+    max-width: 70%;
+    padding: 8px 12px 8px 12px;
+    border-radius: 8px;
     position: relative;
-    transition: transform 0.2s ease;
+    word-wrap: break-word;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    font-size: 14px;
+    line-height: 1.4;
+    margin: 2px 0;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.message:hover {
-    transform: translateY(-2px);
-}
-
+/* User messages (right side) - Clean light blue with subtle shadow */
 .user-message {
-    align-self: flex-end;
-    background-color: var(--accent-primary);
-    color: white;
-    border-bottom-right-radius: 4px;
-    box-shadow: 0 2px 5px var(--shadow-color);
+    background: #e3f2fd;
+    color: #303030;
+    margin-left: auto;
+    margin-right: 8px;
+    border-radius: 8px 8px 2px 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-.user-message::before {
-    content: '';
-    position: absolute;
-    bottom: 8px;
-    right: -6px;
-    width: 12px;
-    height: 12px;
-    background-color: var(--accent-primary);
-    transform: rotate(45deg);
-    border-bottom-right-radius: 2px;
-}
-
+/* Bot messages (left side) - Clean white */
 .bot-message {
-    align-self: flex-start;
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-    border-bottom-left-radius: 4px;
-    box-shadow: 0 2px 5px var(--shadow-color);
+    background: #ffffff;
+    color: #303030;
+    margin-right: auto;
+    margin-left: 8px;
+    border-radius: 8px 8px 8px 2px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-.bot-message::before {
-    content: '';
-    position: absolute;
-    bottom: 8px;
-    left: -6px;
-    width: 12px;
-    height: 12px;
-    background-color: var(--bg-tertiary);
-    transform: rotate(45deg);
-    border-bottom-left-radius: 2px;
+/* Remove any conflicting agent-enhanced styling */
+.agent-enhanced-message {
+    background: #e3f2fd !important;
+    color: #303030 !important;
 }
 
-.message-content p {
-    line-height: 1.5;
+.message-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.message-text {
+    margin-bottom: 4px;
+}
+
+.message-text p {
+    margin: 0;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.message-timestamp {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    font-size: 11px;
+    color: #667781;
+    margin-top: 4px;
+    float: right;
+    clear: both;
+}
+
+.delivery-status {
+    display: flex;
+    align-items: center;
+    margin-left: 4px;
+}
+
+/* WhatsApp-style double tick */
+.delivery-status::after {
+    content: "✓✓";
+    font-size: 12px;
+    color: #53bdeb;
+    font-weight: bold;
+}
+
+.delivery-status i {
+    display: none; /* Hide the FontAwesome icon, use text instead */
+}
+
+.target-user-info {
+    font-size: 11px;
+    color: #667781;
+    margin-top: 4px;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.system-message {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    color: #667781 !important;
+    border: none;
+    text-align: center;
+    margin: 8px auto;
+    max-width: 60%;
+    font-size: 12px;
+    border-radius: 6px;
+    padding: 6px 12px;
+}
+
+.message-sender {
+    color: #0084ff;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+/* Remove old message styling that conflicts */
+.message::before {
+    display: none;
+}
+
+/* Dark mode adjustments for better contrast */
+@media (prefers-color-scheme: dark) {
+    .chat-messages {
+        background-color: #0b141a;
+        background-image: 
+            radial-gradient(circle at 25% 25%, rgba(255,255,255,0.02) 1px, transparent 1px),
+            radial-gradient(circle at 75% 75%, rgba(255,255,255,0.02) 1px, transparent 1px);
+    }
+    
+    .bot-message {
+        background-color: #2a2a2a;
+        color: #ffffff;
+        border: 1px solid #3a3a3a;
+    }
+    
+    .user-message {
+        background-color: #005c4b;
+        color: #ffffff;
+    }
+    
+    .message-timestamp {
+        color: #8696a0;
+    }
+    
+    .ai-enhancement-indicator {
+        background: rgba(255, 255, 255, 0.1);
+        color: #8696a0;
+    }
+    
+    .target-user-info {
+        color: #8696a0;
+    }
+    
+    .system-message {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: #8696a0 !important;
+    }
 }
 
 .chat-input {
@@ -311,42 +527,102 @@ body {
 }
 
 #send-button {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     border: none;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border-radius: 16px;
+    background: linear-gradient(135deg, #0ea5e9, #06b6d4, #14b8a6);
     color: white;
-    margin-left: 10px;
+    margin-left: 12px;
     cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 10px rgba(0, 113, 227, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+        0 4px 14px rgba(14, 165, 233, 0.4),
+        0 2px 4px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
     position: relative;
     overflow: hidden;
 }
 
-#send-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(0, 113, 227, 0.5);
-}
-
-#send-button::after {
+#send-button::before {
     content: '';
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
 }
 
-#send-button:hover::after {
-    opacity: 1;
+#send-button:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 
+        0 8px 25px rgba(14, 165, 233, 0.5),
+        0 4px 10px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    background: linear-gradient(135deg, #0284c7, #0891b2, #059669);
+}
+
+#send-button:hover::before {
+    left: 100%;
+}
+
+#send-button:active {
+    transform: translateY(0) scale(0.98);
+    transition: all 0.1s;
+}
+
+#send-button i {
+    font-size: 18px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+/* Remove the old animations that were causing issues */
+#send-button::after {
+    display: none;
+}
+
+/* Enhanced styling for sandbox mode send button */
+.chat-container.sandbox-mode #send-button {
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6, #a855f7);
+    box-shadow: 
+        0 4px 14px rgba(124, 58, 237, 0.4),
+        0 2px 4px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.chat-container.sandbox-mode #send-button:hover {
+    background: linear-gradient(135deg, #6366f1, #7c3aed, #8b5cf6);
+    box-shadow: 
+        0 8px 25px rgba(124, 58, 237, 0.5),
+        0 4px 10px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* Add subtle pulse animation for both buttons when idle */
+@keyframes buttonPulse {
+    0% { box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4), 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+    50% { box-shadow: 0 4px 18px rgba(99, 102, 241, 0.5), 0 2px 6px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.25); }
+    100% { box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4), 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+}
+
+@keyframes sendButtonPulse {
+    0% { box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4), 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+    50% { box-shadow: 0 4px 18px rgba(14, 165, 233, 0.5), 0 2px 6px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.25); }
+    100% { box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4), 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+}
+
+.llm-toggle:not(:hover):not(:active) {
+    animation: buttonPulse 3s ease-in-out infinite;
+}
+
+#send-button:not(:hover):not(:active) {
+    animation: sendButtonPulse 3s ease-in-out infinite;
+    animation-delay: 1.5s;
 }
 
 .typing-indicator {
@@ -435,58 +711,108 @@ body {
     }
 }
 
-/* User profile in header */
+/* User profile in header - IMPROVED VISIBILITY */
 .user-info {
     display: flex;
     align-items: center;
     margin-left: auto;
     position: relative;
     z-index: 1000;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-info:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent-primary);
 }
 
 .user-picture {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     border: 2px solid var(--accent-primary);
     cursor: pointer;
     transition: all 0.2s ease;
     object-fit: cover;
     z-index: 1001;
+    box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
 }
 
 .user-picture:hover {
-    box-shadow: 0 0 0 2px var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.4), 0 4px 12px rgba(0, 113, 227, 0.4);
+    transform: scale(1.05);
+}
+
+/* Add username display next to profile picture */
+.user-info::after {
+    content: attr(data-username);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-left: 10px;
+    opacity: 0.9;
+    transition: opacity 0.2s ease;
+}
+
+.user-info:hover::after {
+    opacity: 1;
+    color: var(--accent-primary);
 }
 
 .user-dropdown {
-    position: absolute;
-    top: 100%;
-    right: 0;
+    position: fixed;
+    top: 60px;
+    right: 20px;
     background-color: var(--bg-secondary);
-    border-radius: 10px;
-    padding: 12px;
-    min-width: 220px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
+    padding: 16px;
+    min-width: 240px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
     border: 1px solid var(--border-color);
     display: none;
     flex-direction: column;
     gap: 12px;
-    margin-top: 8px;
-    z-index: 9999;
+    z-index: 99999;
     overflow: visible;
     transform: translateZ(0);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
 }
 
 .user-info:hover .user-dropdown {
     display: flex;
-    animation: fadeIn 0.2s ease-out;
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Make sure the dropdown appears on click too */
+.user-dropdown.visible {
+    display: flex !important;
 }
 
 .user-dropdown span {
-    font-size: 0.9rem;
-    font-weight: 500;
+    font-size: 1rem;
+    font-weight: 600;
     color: var(--text-primary);
+}
+
+/* Add a small triangle pointer to the dropdown */
+.user-dropdown::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    right: 20px;
+    width: 12px;
+    height: 12px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-bottom: none;
+    border-right: none;
+    transform: rotate(45deg);
+    z-index: -1;
 }
 
 #logout-button {
@@ -571,19 +897,9 @@ body {
     text-decoration: underline;
 }
 
-.name-display {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 .edit-buttons {
     display: flex;
     gap: 8px;
-}
-
-.user-dropdown {
-    min-width: 220px;
 }
 
 /* Product branding in agents panel */
@@ -699,4 +1015,843 @@ body {
 
 .error-button:hover {
     background-color: #0055cc;
+}
+
+/* Chat windows container styles */
+.chat-windows-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+.chat-window {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-window.active {
+    display: flex;
+}
+
+/* Make sure the chat messages container still fills available space */
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background-color: var(--bg-primary);
+}
+
+/* System message styling */
+.system-message::before {
+    display: none;
+}
+
+.system-message .message-content {
+    font-style: italic;
+    opacity: 0.8;
+}
+
+/* Add styles for unread message indicator */
+.agent-item.has-unread {
+    position: relative;
+}
+
+.agent-item.has-unread::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 10px;
+    height: 10px;
+    background-color: #ff3b30;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7);
+    }
+    
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(255, 59, 48, 0);
+    }
+    
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 59, 48, 0);
+    }
+}
+
+.edit-help {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 4px 0 8px 0;
+    font-style: italic;
+}
+
+/* LLM Toggle Button - REDESIGNED */
+.llm-toggle {
+    width: 48px;
+    height: 48px;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+    color: white;
+    margin-right: 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+        0 4px 14px rgba(99, 102, 241, 0.4),
+        0 2px 4px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    position: relative;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.llm-toggle::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.llm-toggle:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 
+        0 8px 25px rgba(99, 102, 241, 0.5),
+        0 4px 10px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    background: linear-gradient(135deg, #7c3aed, #a855f7, #c084fc);
+}
+
+.llm-toggle:hover::before {
+    left: 100%;
+}
+
+.llm-toggle:active {
+    transform: translateY(0) scale(0.98);
+    transition: all 0.1s;
+}
+
+.llm-toggle i {
+    font-size: 20px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+/* LLM Popup Chat - IMPROVED AND CENTERED WITH SMOOTH DRAGGING */
+.llm-chat-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 380px;
+    height: 500px;
+    background: linear-gradient(135deg, #1e1b4b, #312e81);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    overflow: hidden;
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    resize: both;
+    min-width: 300px;
+    min-height: 400px;
+    max-width: 600px;
+    max-height: 80vh;
+    backdrop-filter: blur(10px);
+    /* Remove transitions that interfere with dragging */
+}
+
+.llm-chat-popup:hover {
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.15);
+    /* Remove transform scale that interferes with dragging */
+}
+
+/* Disable transitions while dragging */
+.llm-chat-popup.dragging {
+    transition: none !important;
+    user-select: none;
+}
+
+.llm-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+    color: white;
+    cursor: move; /* Better cursor for dragging */
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    user-select: none; /* Prevent text selection while dragging */
+}
+
+.llm-popup-header:active {
+    cursor: move;
+}
+
+.llm-popup-header h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    pointer-events: none; /* Prevent text selection interference */
+}
+
+.llm-close-button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 6px 8px;
+    opacity: 0.8;
+    transition: all 0.2s ease;
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0; /* Prevent button from shrinking */
+}
+
+.llm-close-button:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.llm-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: linear-gradient(135deg, #0f0f23, #1a1a3a);
+    position: relative;
+}
+
+/* Add subtle starfield to LLM popup background */
+.llm-chat-messages::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        radial-gradient(1px 1px at 30px 40px, rgba(255, 255, 255, 0.3), transparent),
+        radial-gradient(1px 1px at 80px 20px, rgba(255, 255, 255, 0.2), transparent),
+        radial-gradient(1px 1px at 150px 60px, rgba(255, 255, 255, 0.4), transparent),
+        radial-gradient(1px 1px at 200px 30px, rgba(255, 255, 255, 0.2), transparent),
+        radial-gradient(1px 1px at 280px 50px, rgba(255, 255, 255, 0.3), transparent);
+    background-size: 320px 80px;
+    background-repeat: repeat;
+    animation: llmStarfield 10s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes llmStarfield {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+}
+
+.llm-message {
+    max-width: 90%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    line-height: 1.4;
+    font-size: 14px;
+    animation: fadeIn 0.3s ease-in-out;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.llm-user-message {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+    color: white;
+    border-bottom-right-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.llm-bot-message {
+    align-self: flex-start;
+    background: linear-gradient(135deg, #374151, #4b5563);
+    color: #f3f4f6;
+    border-bottom-left-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.llm-error-message {
+    align-self: center;
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    color: white;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 95%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.llm-typing-indicator {
+    align-self: flex-start;
+    background: linear-gradient(135deg, #374151, #4b5563);
+    color: #f3f4f6;
+    padding: 10px 16px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.llm-typing-indicator span {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+    border-radius: 50%;
+    animation: typingDot 1.4s infinite ease-in-out;
+}
+
+.llm-typing-indicator span:nth-child(1) { animation-delay: 0s; }
+.llm-typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.llm-typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingDot {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+}
+
+.llm-chat-input {
+    display: flex;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #1e1b4b, #312e81);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    align-items: center;
+    gap: 8px;
+}
+
+#llm-query-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 22px;
+    outline: none;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+}
+
+#llm-query-input:focus {
+    box-shadow: 0 0 0 2px #7c3aed, inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    border-color: #7c3aed;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+#llm-query-input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+#llm-query-button {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4);
+}
+
+#llm-query-button:hover {
+    background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.6);
+}
+
+.llm-drag-button {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    cursor: grab;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    z-index: 10; /* Ensure it's clickable */
+}
+
+.llm-drag-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+    color: white;
+    cursor: grab;
+}
+
+.llm-drag-button:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+}
+
+.llm-drag-button i {
+    font-size: 14px;
+    pointer-events: none; /* Ensure clicks go to the button */
+}
+
+/* Add visual feedback when dragging starts */
+.llm-drag-button.dragging {
+    background: rgba(124, 58, 237, 0.3);
+    color: #7c3aed;
+    transform: scale(0.9);
+}
+
+.command-toggle {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-right: 12px;
+    transition: all 0.2s ease;
+    font-family: monospace;
+    font-weight: bold;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0; /* Prevent button from shrinking */
+}
+
+.command-toggle:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.llm-clear-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-right: 12px;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0; /* Prevent button from shrinking */
+}
+
+.llm-clear-button:hover {
+    background: rgba(239, 68, 68, 0.3);
+    transform: scale(1.05);
+}
+
+/* Scrollbar styling for LLM popup */
+.llm-chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.llm-chat-messages::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.llm-chat-messages::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+    border-radius: 3px;
+}
+
+.llm-chat-messages::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Personal sandbox agent styling */
+.agent-item.sandbox-agent {
+    background-color: rgba(0, 113, 227, 0.08);
+    border: 1px solid rgba(0, 113, 227, 0.2);
+}
+
+.agent-item.sandbox-agent:hover {
+    background-color: rgba(0, 113, 227, 0.12);
+}
+
+.agent-item.sandbox-agent.active {
+    background-color: rgba(0, 113, 227, 0.2);
+    border: 1px solid var(--accent-primary);
+}
+
+.agent-item.sandbox-agent .agent-avatar {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    box-shadow: 0 2px 10px rgba(0, 113, 227, 0.4);
+}
+
+.agent-item.sandbox-agent .agent-info h3 {
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+/* Sandbox chat interface styling - TONED DOWN */
+.chat-container.sandbox-mode {
+    background: linear-gradient(135deg, #000814, #001122);
+    /* Removed the animated gradient */
+}
+
+.chat-container.sandbox-mode::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle at 30% 70%, rgba(0, 113, 227, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 70% 30%, rgba(56, 183, 255, 0.05) 0%, transparent 50%);
+    /* Removed the floating animation */
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Sandbox chat header styling - SIMPLIFIED */
+.chat-container.sandbox-mode .chat-header {
+    background: linear-gradient(90deg, rgba(0, 113, 227, 0.15), rgba(56, 183, 255, 0.1));
+    border-bottom: 1px solid rgba(0, 113, 227, 0.2);
+    position: relative;
+    z-index: 1;
+}
+
+.chat-container.sandbox-mode .chat-header::after {
+    display: none; /* Remove the animated glow effect */
+}
+
+/* Add AI assistant indicator to sandbox header */
+.chat-container.sandbox-mode .chat-header .title::after {
+    content: '🤖 AI Assistant';
+    display: block;
+    font-size: 0.7rem;
+    color: var(--accent-primary);
+    margin-top: 2px;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+/* Sandbox chat messages area - STARFIELD BACKGROUND */
+.chat-container.sandbox-mode .chat-messages {
+    background: #000000;
+    background-image: 
+        radial-gradient(1px 1px at 20px 30px, rgba(255, 255, 255, 0.8), transparent),
+        radial-gradient(1px 1px at 40px 70px, rgba(255, 255, 255, 0.6), transparent),
+        radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 255, 0.9), transparent),
+        radial-gradient(1px 1px at 130px 80px, rgba(255, 255, 255, 0.4), transparent),
+        radial-gradient(1px 1px at 160px 30px, rgba(255, 255, 255, 0.7), transparent),
+        radial-gradient(1px 1px at 200px 60px, rgba(255, 255, 255, 0.5), transparent),
+        radial-gradient(1px 1px at 230px 90px, rgba(255, 255, 255, 0.8), transparent),
+        radial-gradient(1px 1px at 270px 20px, rgba(255, 255, 255, 0.6), transparent),
+        radial-gradient(1px 1px at 300px 50px, rgba(255, 255, 255, 0.9), transparent),
+        radial-gradient(1px 1px at 330px 80px, rgba(255, 255, 255, 0.4), transparent),
+        radial-gradient(1px 1px at 360px 40px, rgba(255, 255, 255, 0.7), transparent),
+        radial-gradient(1px 1px at 400px 70px, rgba(255, 255, 255, 0.5), transparent);
+    background-size: 420px 100px;
+    background-repeat: repeat;
+    position: relative;
+    z-index: 1;
+    animation: starfield 8s ease-in-out infinite;
+}
+
+@keyframes starfield {
+    0%, 100% {
+        opacity: 1;
+    }
+    25% {
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 0.9;
+    }
+    75% {
+        opacity: 0.7;
+    }
+}
+
+/* Add some twinkling stars with different timing */
+.chat-container.sandbox-mode .chat-messages::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        radial-gradient(1px 1px at 50px 20px, rgba(255, 255, 255, 0.9), transparent),
+        radial-gradient(1px 1px at 100px 50px, rgba(255, 255, 255, 0.6), transparent),
+        radial-gradient(1px 1px at 150px 80px, rgba(255, 255, 255, 0.8), transparent),
+        radial-gradient(1px 1px at 250px 30px, rgba(255, 255, 255, 0.5), transparent),
+        radial-gradient(1px 1px at 350px 60px, rgba(255, 255, 255, 0.7), transparent);
+    background-size: 400px 100px;
+    background-repeat: repeat;
+    animation: starfieldTwinkle 12s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes starfieldTwinkle {
+    0%, 100% {
+        opacity: 0.3;
+    }
+    33% {
+        opacity: 0.8;
+    }
+    66% {
+        opacity: 0.2;
+    }
+}
+
+/* Sandbox message styling - keep the nice colors but remove animations */
+.chat-container.sandbox-mode .user-message {
+    background: linear-gradient(135deg, #0071e3, #38b7ff);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chat-container.sandbox-mode .bot-message {
+    background: linear-gradient(135deg, #1a2332, #2a3441);
+    color: #e8f4f8;
+    border: 1px solid rgba(0, 113, 227, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* AI thinking indicator for sandbox - SIMPLIFIED */
+.chat-container.sandbox-mode .typing-indicator .typing-dot {
+    background: var(--accent-primary);
+    /* Removed the gradient and glow */
+}
+
+/* Sandbox input area */
+.chat-container.sandbox-mode .chat-input {
+    background: linear-gradient(135deg, #001122, #001d3d);
+    border-top: 1px solid rgba(0, 113, 227, 0.3);
+    position: relative;
+    z-index: 1;
+}
+
+.chat-container.sandbox-mode #user-input {
+    background: linear-gradient(135deg, #1a2332, #2a3441);
+    border: 1px solid rgba(0, 113, 227, 0.3);
+    color: #e8f4f8;
+    box-shadow: inset 0 0 0 1px rgba(0, 113, 227, 0.2);
+}
+
+.chat-container.sandbox-mode #user-input:focus {
+    box-shadow: 0 0 0 2px var(--accent-primary), 0 0 15px rgba(0, 113, 227, 0.3);
+    border-color: var(--accent-primary);
+}
+
+.chat-container.sandbox-mode #user-input::placeholder {
+    color: rgba(232, 244, 248, 0.5);
+}
+
+/* Send button for sandbox - SIMPLIFIED */
+.chat-container.sandbox-mode #send-button {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    box-shadow: 0 4px 15px rgba(0, 113, 227, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.chat-container.sandbox-mode #send-button::before {
+    display: none; /* Remove the spinning animation */
+}
+
+.chat-container.sandbox-mode #send-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 113, 227, 0.5);
+}
+
+/* Sandbox scrollbar */
+.chat-container.sandbox-mode .chat-messages::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--accent-primary), var(--accent-secondary));
+    border-radius: 4px;
+}
+
+.chat-container.sandbox-mode .chat-messages::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--accent-secondary), var(--accent-primary));
+}
+
+/* Enhanced message group styling */
+.enhanced-message-group {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.enhanced-message {
+    position: relative;
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6, #6366f1);
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    box-shadow: 0 3px 20px rgba(59, 130, 246, 0.3);
+    color: white;
+}
+
+.enhanced-message .message-text p {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.enhanced-indicator {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.2);
+    padding: 3px 8px;
+    border-radius: 10px;
+    margin-bottom: 5px;
+    display: inline-block;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.target-user-info {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 5px;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 2px 6px;
+    border-radius: 8px;
+    display: inline-block;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.enhanced-message .message-timestamp {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.enhanced-message .delivery-status::after {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* LLM Drag Preview Element - MISSING STYLES */
+.llm-drag-preview {
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    pointer-events: none;
+    z-index: 2000;
+    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    animation: dragPreviewPulse 1s ease-in-out infinite;
+}
+
+@keyframes dragPreviewPulse {
+    0%, 100% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.05); opacity: 1; }
+}
+
+/* Context file emoji styling for when context is added to input */
+.file-attachment-emoji {
+    display: inline-flex;
+    align-items: center;
+    background-color: rgba(124, 58, 237, 0.1);
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin: 0 2px;
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    font-size: 1.1em;
+    transition: all 0.2s ease;
+}
+
+.file-attachment-emoji:hover {
+    background-color: rgba(124, 58, 237, 0.2);
+    cursor: pointer;
+}
+
+/* Add styling for file emoji in messages */
+.message-content p .file-emoji {
+    position: relative;
+    background-color: rgba(124, 58, 237, 0.15);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin: 0 2px;
+    font-size: 1.1em;
+    border: 1px dashed rgba(124, 58, 237, 0.3);
+    transition: all 0.2s ease;
+}
+
+.message-content p .file-emoji::after {
+    content: 'LLM Context';
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.message-content p .file-emoji:hover {
+    background-color: rgba(124, 58, 237, 0.25);
+}
+
+.message-content p .file-emoji:hover::after {
+    opacity: 1;
 } 

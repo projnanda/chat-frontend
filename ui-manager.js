@@ -8,38 +8,271 @@
  * @param {string} message - The message text
  * @param {boolean} isUser - Whether the message is from the user (true) or agent (false)
  * @param {string} senderId - Optional ID of the sender for agent-to-agent messages
+ * @param {object} messageData - Optional full message data object with sender_name, from_agent, etc.
  */
-export function addMessage(message, isUser = false, senderId = null) {
+export function addMessage(message, isUser = false, senderId = null, messageData = null) {
+    // Filter out system notification messages
+    if (!isUser && message) {
+        // Skip system notification messages
+        if (message.includes('[AGENT') && message.includes('Message sent to')) {
+            console.log("UI filtered out system message:", message);
+            return;
+        }
+        
+        // First, try to remove specific agent prefix patterns (e.g., "agent2: FROM agent2:")
+        const agentPrefixPattern = /^agent\d+:\s+FROM\s+agent\d+:/;
+        if (agentPrefixPattern.test(message)) {
+            message = message.replace(agentPrefixPattern, '');
+            console.log("Removed agent prefix pattern, new message:", message);
+        }
+        
+        // Also try to remove any "FROM agent2:" anywhere in the message
+        if (message.includes('FROM ') || message.toLowerCase().includes('from agent')) {
+            message = message.replace(/FROM\s+agent\d+\s*:\s*/i, '');
+            message = message.replace(/FROM\s+\w+\s*:\s*/i, '');
+            console.log("Removed FROM agent text, new message:", message);
+        }
+    }
+    
     const chatMessages = document.getElementById('chat-messages');
     if (!chatMessages) return;
     
-    const messageDiv = document.createElement('div');
-    messageDiv.classList.add('message');
-    messageDiv.classList.add(isUser ? 'user-message' : 'bot-message');
+    // Use the addMessageToContainer function to add the message to the default container
+    addMessageToContainer(chatMessages, message, isUser, senderId, messageData);
+}
 
-    const messageContent = document.createElement('div');
-    messageContent.classList.add('message-content');
-
-    const messageText = document.createElement('p');
+/**
+ * Add a message to a specific chat container
+ * @param {HTMLElement} container - The container to add the message to
+ * @param {string} message - The message text
+ * @param {boolean} isUser - Whether the message is from the user (true) or agent (false)
+ * @param {string} senderId - Optional ID of the sender for agent-to-agent messages
+ * @param {object} messageData - Optional full message data object with sender_name, from_agent, etc.
+ */
+export function addMessageToContainer(container, message, isUser = false, senderId = null, messageData = null) {
+    if (!container) return;
     
-    // If we have a sender ID and it's not a user message, show who it's from
-    if (senderId && !isUser) {
-        const senderSpan = document.createElement('span');
-        senderSpan.classList.add('message-sender');
-        senderSpan.textContent = `${senderId}: `;
-        senderSpan.style.fontWeight = 'bold';
-        messageText.appendChild(senderSpan);
+    // Filter out system notification messages
+    if (!isUser && message) {
+        // Skip system notification messages
+        if (message.includes('[AGENT') && message.includes('Message sent to')) {
+            console.log("UI filtered out system message:", message);
+            return;
+        }
     }
     
-    // Append the actual message text
-    messageText.appendChild(document.createTextNode(message));
-
+    // Check if this is an agent-enhanced message (contains @mention and agent info)
+    // Check the message content regardless of isUser value since app.js may pass isUser=true for enhanced messages
+    const isAgentEnhanced = message.includes('[AGENT');
+    
+    // Extract original message and agent enhancement if it's an agent-enhanced message
+    let originalMessage = '';
+    let agentEnhancement = '';
+    let targetUser = '';
+    let isActuallyUserMessage = isUser; // Track the corrected user status
+    
+    if (isAgentEnhanced) {
+        console.log(`🔍 Detected potential agent-enhanced message: "${message}"`);
+        
+        // Parse the actual message format we're seeing:
+        // "@mihirsheth9999: [AGENT agentm33 Sending]: Dear Mihir, I hope you're well. Best regards"
+        // Fixed regex to handle additional text after agent ID (like "Sending") and multiline content
+        let agentMatch = message.match(/^@(\w+):\s*\[AGENT\s+([^\]]+)\]:\s*([\s\S]+)$/);
+        let agentId = null;
+        
+        if (agentMatch) {
+            // Format: @user: [AGENT agentId ...]: message
+            targetUser = agentMatch[1];
+            agentId = agentMatch[2].split(/\s+/)[0]; // Get just the agent ID, ignore additional text
+            agentEnhancement = agentMatch[3];
+            console.log(`📝 Enhanced message detected - Target: ${targetUser}, Agent: ${agentId}, Message: "${agentEnhancement}"`);
+        } else {
+            // Fallback: try simpler pattern [AGENT id]: message (with multiline support)
+            agentMatch = message.match(/^\[AGENT\s+([^\]]+)\]:\s*([\s\S]+)$/);
+            if (agentMatch) {
+                agentId = agentMatch[1].split(/\s+/)[0]; // Get just the agent ID, ignore additional text
+                agentEnhancement = agentMatch[2];
+                console.log(`📝 Simple enhanced message detected - Agent: ${agentId}, Message: "${agentEnhancement}"`);
+            }
+        }
+        
+        console.log(`🔬 Debug values: agentMatch=${!!agentMatch}, agentId="${agentId}", agentEnhancement="${agentEnhancement}"`);
+        
+        if (agentMatch && agentId) {
+            // For agent-enhanced messages, we should ALWAYS treat them as user messages
+            // because they represent the user's original message that was enhanced by their agent
+            isActuallyUserMessage = true;
+            console.log(`✅ Agent-enhanced message will be treated as USER message (right side)`);
+            console.log(`🎯 Enhanced content: "${agentEnhancement}"`);
+            console.log(`📤 Target user: "${targetUser}"`);
+        } else {
+            console.log(`❌ Agent match failed - treating as regular message`);
+        }
+    }
+    
+    // Clean up agent prefix patterns for regular messages
+    if (!isActuallyUserMessage && !isAgentEnhanced && message) {
+        const agentPrefixPattern = /^agent\d+:\s+FROM\s+agent\d+:/;
+        if (agentPrefixPattern.test(message)) {
+            message = message.replace(agentPrefixPattern, '');
+        }
+        
+        if (message.includes('FROM ') || message.toLowerCase().includes('from agent')) {
+            message = message.replace(/FROM\s+agent\d+\s*:\s*/i, '');
+            message = message.replace(/FROM\s+\w+\s*:\s*/i, '');
+        }
+    }
+    
+    // Create the message container
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('message-wrapper');
+    
+    // For agent-enhanced messages, create a special grouped layout
+    if (isAgentEnhanced && isActuallyUserMessage && agentEnhancement) {
+        console.log(`🎨 Creating enhanced message UI for: "${agentEnhancement}"`);
+        messageDiv.classList.add('enhanced-message-group');
+        
+        // Create enhanced message bubble (main message)
+        const enhancedBubble = document.createElement('div');
+        enhancedBubble.classList.add('message', 'user-message', 'enhanced-message');
+        
+        const enhancedContent = document.createElement('div');
+        enhancedContent.classList.add('message-content');
+        
+        // Add "AI Enhanced" indicator at the top
+        const enhancedIndicator = document.createElement('div');
+        enhancedIndicator.classList.add('enhanced-indicator');
+        enhancedIndicator.innerHTML = '🤖 AI Enhanced';
+        
+        const enhancedText = document.createElement('div');
+        enhancedText.classList.add('message-text');
+        
+        const enhancedP = document.createElement('p');
+        enhancedP.textContent = agentEnhancement;
+        enhancedText.appendChild(enhancedP);
+        
+        // Add target user info if available
+        if (targetUser) {
+            const targetInfo = document.createElement('div');
+            targetInfo.classList.add('target-user-info');
+            targetInfo.textContent = `→ @${targetUser}`;
+            enhancedText.appendChild(targetInfo);
+        }
+        
+        // Add timestamp
+        const timestamp = document.createElement('div');
+        timestamp.classList.add('message-timestamp');
+        const now = new Date();
+        timestamp.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        // Add delivery status
+        const deliveryStatus = document.createElement('div');
+        deliveryStatus.classList.add('delivery-status');
+        deliveryStatus.innerHTML = '<i class="fas fa-check-double"></i>';
+        timestamp.appendChild(deliveryStatus);
+        
+        enhancedContent.appendChild(enhancedIndicator);
+        enhancedContent.appendChild(enhancedText);
+        enhancedContent.appendChild(timestamp);
+        enhancedBubble.appendChild(enhancedContent);
+        
+        messageDiv.appendChild(enhancedBubble);
+        
+        console.log(`✅ Enhanced message UI created successfully!`);
+    }
+    // Handle regular messages (original logic)
+    else {
+        console.log(`📝 Creating regular message UI. isUser: ${isActuallyUserMessage}, isAgentEnhanced: ${isAgentEnhanced}`);
+    
+    // Create the message bubble
+    const messageBubble = document.createElement('div');
+    messageBubble.classList.add('message');
+    messageBubble.classList.add(isActuallyUserMessage ? 'user-message' : 'bot-message');
+    
+    const messageContent = document.createElement('div');
+    messageContent.classList.add('message-content');
+    
+    // Create message text element
+    const messageText = document.createElement('div');
+    messageText.classList.add('message-text');
+    
+        const messageP = document.createElement('p');
+        
+        // Special style for System messages
+        if (senderId === 'System') {
+            messageBubble.classList.add('system-message');
+            messageP.style.fontStyle = 'italic';
+            messageP.style.color = '#6e6e6e';
+        } 
+        // Show sender name for bot messages from other agents
+        else if (senderId && !isActuallyUserMessage && senderId !== 'System') {
+            let displayName = senderId;
+            
+            // Map agent IDs to human names
+            if (senderId.startsWith('agent')) {
+                const containerIdMatch = container.id.match(/chat-messages-(\w+)/);
+                if (containerIdMatch && containerIdMatch[1]) {
+                    let agentName = containerIdMatch[1];
+                    if (!agentName.startsWith('@')) {
+                        displayName = `@${agentName}`;
+                    } else {
+                        displayName = agentName;
+                    }
+                }
+            }
+            
+            const senderSpan = document.createElement('span');
+            senderSpan.classList.add('message-sender');
+            senderSpan.textContent = `${displayName}: `;
+            senderSpan.style.fontWeight = 'bold';
+            messageP.appendChild(senderSpan);
+        }
+        
+        // Handle file emoji styling
+        if (message.includes('📄')) {
+            const parts = message.split('📄');
+            messageP.appendChild(document.createTextNode(parts[0]));
+            
+            const emojiSpan = document.createElement('span');
+            emojiSpan.classList.add('file-emoji');
+            emojiSpan.textContent = '📄';
+            messageP.appendChild(emojiSpan);
+            
+            if (parts.length > 1) {
+                messageP.appendChild(document.createTextNode(parts[1]));
+            }
+        } else {
+            messageP.appendChild(document.createTextNode(message));
+        }
+        
+        messageText.appendChild(messageP);
+    
+    // Add timestamp
+    const timestamp = document.createElement('div');
+    timestamp.classList.add('message-timestamp');
+    const now = new Date();
+    timestamp.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    // Add delivery status for user messages
+    if (isActuallyUserMessage) {
+        const deliveryStatus = document.createElement('div');
+        deliveryStatus.classList.add('delivery-status');
+        deliveryStatus.innerHTML = '<i class="fas fa-check-double"></i>';
+        timestamp.appendChild(deliveryStatus);
+    }
+    
     messageContent.appendChild(messageText);
-    messageDiv.appendChild(messageContent);
-    chatMessages.appendChild(messageDiv);
-
+    messageContent.appendChild(timestamp);
+    messageBubble.appendChild(messageContent);
+    messageDiv.appendChild(messageBubble);
+    }
+    
+    console.log(`🎛️ Final values: isAgentEnhanced=${isAgentEnhanced}, isActuallyUserMessage=${isActuallyUserMessage}, agentEnhancement="${agentEnhancement}"`);
+    
+    container.appendChild(messageDiv);
+    
     // Scroll to the bottom of the chat
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    container.scrollTop = container.scrollHeight;
 }
 
 /**
@@ -49,9 +282,22 @@ export function showTypingIndicator() {
     const chatMessages = document.getElementById('chat-messages');
     if (!chatMessages) return;
     
+    showTypingIndicatorInContainer(chatMessages);
+}
+
+/**
+ * Display a typing indicator in a specific chat container
+ * @param {HTMLElement} container - The container to add the typing indicator to
+ */
+export function showTypingIndicatorInContainer(container) {
+    if (!container) return;
+    
+    // Remove any existing typing indicator first
+    removeTypingIndicatorFromContainer(container);
+    
     const typingDiv = document.createElement('div');
     typingDiv.classList.add('message', 'bot-message');
-    typingDiv.id = 'typing-indicator';
+    typingDiv.id = 'typing-indicator-' + (container.id || Math.random().toString(36).substring(7));
 
     const typingContent = document.createElement('div');
     typingContent.classList.add('typing-indicator');
@@ -63,8 +309,8 @@ export function showTypingIndicator() {
     }
 
     typingDiv.appendChild(typingContent);
-    chatMessages.appendChild(typingDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    container.appendChild(typingDiv);
+    container.scrollTop = container.scrollHeight;
 }
 
 /**
@@ -75,6 +321,20 @@ export function removeTypingIndicator() {
     if (typingIndicator) {
         typingIndicator.remove();
     }
+}
+
+/**
+ * Remove the typing indicator from a specific chat container
+ * @param {HTMLElement} container - The container to remove the typing indicator from
+ */
+export function removeTypingIndicatorFromContainer(container) {
+    if (!container) return;
+    
+    // Find all typing indicators in this container
+    const typingIndicators = container.querySelectorAll('[id^="typing-indicator-"]');
+    typingIndicators.forEach(indicator => {
+        indicator.remove();
+    });
 }
 
 /**
@@ -171,14 +431,14 @@ export function showErrorMessage(message) {
  * @returns {HTMLElement} - The agent item element
  */
 export function createAgentItem(name, url, index) {
-    // Helper function to get icon class based on index
-    function getIconClassForAgent(idx) {
-        const icons = [
-            'fa-user', 'fa-code', 'fa-search', 
-            'fa-edit', 'fa-cog', 'fa-chart-bar', 
-            'fa-globe', 'fa-brain', 'fa-comments'
+    // Helper function to get background color based on index
+    function getAvatarColorForAgent(idx) {
+        const colors = [
+            '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57',
+            '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43',
+            '#3742fa', '#2f3542', '#ff3838', '#00d8d6', '#17c0eb'
         ];
-        return icons[idx % icons.length];
+        return colors[idx % colors.length];
     }
     
     // Helper function to capitalize first letter
@@ -187,7 +447,23 @@ export function createAgentItem(name, url, index) {
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
     
-    const iconClass = getIconClassForAgent(index);
+    // Helper function to get initials from name
+    function getInitials(name) {
+        if (!name) return '?';
+        
+        // Handle names with special characters (like "mariagorskikh - Sandbox")
+        const cleanName = name.replace(/\s*-\s*sandbox\s*/i, '').trim();
+        
+        const words = cleanName.split(/\s+/);
+        if (words.length >= 2) {
+            return (words[0][0] + words[1][0]).toUpperCase();
+        } else {
+            return cleanName.slice(0, 2).toUpperCase();
+        }
+    }
+    
+    const avatarColor = getAvatarColorForAgent(index);
+    const initials = getInitials(name);
     
     const agentItem = document.createElement('div');
     agentItem.className = 'agent-item';
@@ -199,8 +475,8 @@ export function createAgentItem(name, url, index) {
     }
     
     agentItem.innerHTML = `
-        <div class="agent-avatar">
-            <i class="fas ${iconClass}"></i>
+        <div class="agent-avatar" style="background-color: ${avatarColor};">
+            <span class="avatar-initials">${initials}</span>
         </div>
         <div class="agent-info">
             <h3>${capitalizeFirstLetter(name) || `Agent ${index + 1}`}</h3>
@@ -228,14 +504,52 @@ export function updateChatHeader(agent) {
     const chatHeader = document.querySelector('.chat-header');
     if (!chatHeader) return;
     
-    const avatar = chatHeader.querySelector('.avatar i');
+    const avatar = chatHeader.querySelector('.avatar');
     const title = chatHeader.querySelector('.title h1');
     const description = chatHeader.querySelector('.title p');
     
     if (avatar && title && description) {
-        avatar.className = '';
-        avatar.classList.add('fas', 'fa-robot');
+        // Helper function to get initials from name
+        function getInitials(name) {
+            if (!name) return '?';
+            
+            // Handle names with special characters (like "mariagorskikh - Sandbox")
+            const cleanName = name.replace(/\s*-\s*sandbox\s*/i, '').trim();
+            
+            const words = cleanName.split(/\s+/);
+            if (words.length >= 2) {
+                return (words[0][0] + words[1][0]).toUpperCase();
+            } else {
+                return cleanName.slice(0, 2).toUpperCase();
+            }
+        }
+        
+        // Helper function to get color based on agent name
+        function getAvatarColorForName(name) {
+            const colors = [
+                '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57',
+                '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43',
+                '#3742fa', '#2f3542', '#ff3838', '#00d8d6', '#17c0eb'
+            ];
+            // Generate a consistent color based on name hash
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) {
+                hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return colors[Math.abs(hash) % colors.length];
+        }
+        
+        const initials = getInitials(agent.name);
+        const avatarColor = getAvatarColorForName(agent.name);
+        
+        // Replace icon with initials
+        avatar.innerHTML = `<span class="avatar-initials">${initials}</span>`;
+        avatar.style.backgroundColor = avatarColor;
+        
         title.textContent = agent.name;
-        description.textContent = 'NANDA AI Agent';
+        
+        // Hide or clear the description
+        description.textContent = ''; // Remove the description text
+        description.style.display = 'none'; // Hide the description element
     }
 } 
