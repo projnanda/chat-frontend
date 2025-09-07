@@ -54,7 +54,13 @@
                 <!-- Additional chat windows will be created dynamically -->
             </div>
             <div class="chat-input">
-                <input type="text" id="user-input" placeholder="Type your message here...">
+                <textarea id="user-input"
+                    placeholder="Type your message here..."
+                    rows="1"
+                    style="max-height:200px; overflow-y:auto; resize:none;"
+                    oninput="this.style.height='auto';
+                    this.style.height=(this.scrollHeight>200?200:this.scrollHeight)+'px';">
+                </textarea>
                 <button id="send-button">
                     <i class="fas fa-paper-plane"></i>
                 </button>
